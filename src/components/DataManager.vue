@@ -172,11 +172,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="data-manager">
-    <div class="manager-header">
-      <h2>数据管理</h2>
-      <button class="btn-close" @click="emit('close')">×</button>
-    </div>
+  <div class="manager-container">
+    <div class="data-manager">
+      <div class="manager-header">
+        <h2>数据管理</h2>
+        <button class="btn-close" @click="emit('close')">×</button>
+      </div>
 
     <!-- Message -->
     <div v-if="message" class="message" :class="message.type">
@@ -283,11 +284,12 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.data-manager {
+.manager-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -299,6 +301,17 @@ onMounted(() => {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+}
+
+.data-manager {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .manager-header {
@@ -583,5 +596,187 @@ onMounted(() => {
 
 .empty-hint {
   font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .manager-container {
+    padding: 12px;
+  }
+
+  .data-manager {
+    max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .manager-header {
+    padding: 12px 16px;
+  }
+
+  .manager-header h2 {
+    font-size: 18px;
+  }
+
+  .message {
+    margin: 0 16px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .manager-content {
+    padding: 16px;
+  }
+
+  .section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+
+  .action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .action-card {
+    padding: 16px;
+  }
+
+  .card-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .card-label {
+    font-size: 14px;
+  }
+
+  .card-desc {
+    font-size: 12px;
+  }
+
+  .btn-primary {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .backup-item {
+    padding: 10px 12px;
+  }
+
+  .backup-name {
+    font-size: 13px;
+  }
+
+  .backup-date {
+    font-size: 11px;
+  }
+
+  .empty-state {
+    padding: 30px 16px;
+  }
+
+  .empty-icon {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .manager-container {
+    padding: 8px;
+  }
+
+  .manager-header {
+    padding: 10px 12px;
+  }
+
+  .manager-header h2 {
+    font-size: 16px;
+  }
+
+  .message {
+    margin: 0 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .manager-content {
+    padding: 12px;
+  }
+
+  .section {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .action-card {
+    padding: 12px;
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
+    margin-bottom: 0;
+    margin-right: 12px;
+  }
+
+  .card-label {
+    font-size: 13px;
+  }
+
+  .card-desc {
+    font-size: 11px;
+  }
+
+  .btn-primary {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .backup-item {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .backup-actions {
+    width: 100%;
+    margin-top: 8px;
+    justify-content: flex-end;
+  }
+
+  .btn-restore,
+  .btn-delete {
+    flex: 1;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .empty-state {
+    padding: 24px 12px;
+  }
+
+  .empty-icon {
+    font-size: 36px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+  }
 }
 </style>

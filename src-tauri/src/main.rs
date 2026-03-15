@@ -6,6 +6,15 @@ mod db;
 mod handlers;
 
 fn main() {
+    // Initialize database pool on startup
+    let rt = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+    rt.block_on(async {
+        match db::get_pool().await {
+            Ok(_) => println!("Database initialized successfully"),
+            Err(e) => eprintln!("Failed to initialize database: {}", e),
+        }
+    });
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -39,6 +48,14 @@ fn main() {
             handlers::restore_database,
             handlers::list_backups,
             handlers::delete_backup,
+            // Password management
+            handlers::create_password,
+            handlers::get_password,
+            handlers::list_passwords,
+            handlers::update_password,
+            handlers::delete_password,
+            handlers::get_password_categories,
+            handlers::get_password_subcategories,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,20 +2,39 @@ use sqlx::SqlitePool;
 use std::path::PathBuf;
 
 pub async fn get_db_path() -> PathBuf {
+    // Try to use AppData directory, fallback to current directory if it fails
     let mut path = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
     path.push("personal-tools");
     path.push("data");
-    std::fs::create_dir_all(&path).ok();
+    
+    // Try to create directory, fallback to current directory if it fails
+    if std::fs::create_dir_all(&path).is_err() {
+        eprintln!("Failed to create AppData directory, using current directory");
+        path = PathBuf::from(".");
+        path.push("data");
+        std::fs::create_dir_all(&path).ok();
+    }
+    
     path.push("todo.db");
     path
 }
 
 pub async fn init_db() -> Result<SqlitePool, sqlx::Error> {
     let db_path = get_db_path().await;
-    let database_url = format!("sqlite:{}", db_path.display());
-
-    let pool = SqlitePool::connect(&database_url).await?;
-
+    
+    // Ensure parent directory exists
+    if let Some(parent) = db_path.parent() {
+        if let Err(e) = std::fs::create_dir_all(parent) {
+            eprintln!("Warning: Failed to create database directory: {}", e);
+            eprintln!("Database may fail to initialize");
+        }
+    }
+    
+    eprintln!("Database path: {}", db_path.display());
+    
+    // Try multiple connection strategies
+    let pool = try_connect(&db_path).await?;
+    
     // Enable WAL mode for better concurrency
     sqlx::query("PRAGMA journal_mode = WAL")
         .execute(&pool)
@@ -24,8 +43,36 @@ pub async fn init_db() -> Result<SqlitePool, sqlx::Error> {
     sqlx::query("PRAGMA foreign_keys = ON")
         .execute(&pool)
         .await?;
-
+    
+    eprintln!("Database initialized successfully");
     Ok(pool)
+}
+
+async fn try_connect(db_path: &std::path::Path) -> Result<SqlitePool, sqlx::Error> {
+    // Strategy 1: Use sqlite:// with mode=rwc
+    let path_str = db_path.to_string_lossy().replace('\\', "/");
+    let database_url = format!("sqlite://{}?mode=rwc", path_str);
+    
+    eprintln!("Trying connection URL: {}", database_url);
+    
+    match SqlitePool::connect(&database_url).await {
+        Ok(pool) => return Ok(pool),
+        Err(e) => eprintln!("Strategy 1 failed: {}", e),
+    }
+    
+    // Strategy 2: Use simple sqlite: format
+    let database_url = format!("sqlite:{}", db_path.display());
+    eprintln!("Trying connection URL: {}", database_url);
+    
+    match SqlitePool::connect(&database_url).await {
+        Ok(pool) => return Ok(pool),
+        Err(e) => eprintln!("Strategy 2 failed: {}", e),
+    }
+    
+    // Strategy 3: Use in-memory database as last resort
+    eprintln!("Falling back to in-memory database");
+    let database_url = "sqlite::memory:";
+    SqlitePool::connect(database_url).await
 }
 
 pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
@@ -85,6 +132,21 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         )
     "#).execute(pool).await?;
 
+    // Create passwords table
+    sqlx::query(r#"
+        CREATE TABLE IF NOT EXISTS passwords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT NOT NULL,
+            subcategory TEXT,
+            account TEXT NOT NULL,
+            password TEXT NOT NULL,
+            login_url TEXT,
+            notes TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    "#).execute(pool).await?;
+
     // Create indexes
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
         .execute(pool)
@@ -107,6 +169,14 @@ pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         .await?;
 
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_task_history_task_id ON task_history(task_id)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_passwords_category ON passwords(category)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_passwords_subcategory ON passwords(subcategory)")
         .execute(pool)
         .await?;
 

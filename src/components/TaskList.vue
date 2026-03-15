@@ -3,26 +3,35 @@ import { ref, computed } from 'vue'
 import { useTaskStore } from '../stores/task'
 import TaskItem from './TaskItem.vue'
 import TaskForm from './TaskForm.vue'
+import type { Task } from '../types'
 
 const taskStore = useTaskStore()
 
 const showTaskForm = ref(false)
-const editingTask = ref<any>(null)
+const editingTask = ref<Task | null>(null)
+
+// Extract date calculations to separate computed to avoid recalculation
+const dateReferences = computed(() => {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const weekEnd = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+  
+  return { today, tomorrow, weekEnd }
+})
 
 const groupedTasks = computed(() => {
   const pending = taskStore.tasks.filter(t => t.status === 'pending')
   const completed = taskStore.tasks.filter(t => t.status === 'completed')
 
-  // Group pending tasks by due date
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  // Use cached date references
+  const { today, tomorrow, weekEnd } = dateReferences.value
 
-  const overdue: any[] = []
-  const todayTasks: any[] = []
-  const thisWeek: any[] = []
-  const later: any[] = []
+  const overdue: Task[] = []
+  const todayTasks: Task[] = []
+  const thisWeek: Task[] = []
+  const later: Task[] = []
 
   pending.forEach(task => {
     if (!task.due_date) {
@@ -35,7 +44,7 @@ const groupedTasks = computed(() => {
       overdue.push(task)
     } else if (dueDate.toDateString() === today.toDateString()) {
       todayTasks.push(task)
-    } else if (dueDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+    } else if (dueDate <= weekEnd) {
       thisWeek.push(task)
     } else {
       later.push(task)
@@ -51,7 +60,7 @@ const groupedTasks = computed(() => {
   }
 })
 
-function openTaskForm(task?: any) {
+function openTaskForm(task?: Task) {
   editingTask.value = task || null
   showTaskForm.value = true
 }
@@ -202,7 +211,7 @@ function handleTaskDeleted() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   overflow: hidden;
 }
 
@@ -210,25 +219,30 @@ function handleTaskDeleted() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-filter {
-  padding: 6px 16px;
+  padding: 5px 12px;
   border: 1px solid #d9d9d9;
   background: white;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: #595959;
   transition: all 0.2s;
 }
@@ -247,26 +261,29 @@ function handleTaskDeleted() {
 .batch-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-left: 16px;
+  gap: 6px;
+  padding-left: 12px;
   border-left: 1px solid #e0e0e0;
+  flex-wrap: wrap;
 }
 
 .selected-count {
-  font-size: 14px;
+  font-size: 13px;
   color: #1890ff;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .btn-small {
-  padding: 4px 12px;
+  padding: 3px 10px;
   border: 1px solid #d9d9d9;
   background: white;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   color: #595959;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .btn-small:hover {
@@ -310,6 +327,13 @@ function handleTaskDeleted() {
 .toolbar-right {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.task-count {
+  font-size: 13px;
+  color: #8c8c8c;
+  white-space: nowrap;
 }
 
 .task-groups {
@@ -333,20 +357,20 @@ function handleTaskDeleted() {
 
 .task-group {
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: #fafafa;
   border-bottom: 1px solid #f0f0f0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #262626;
 }
@@ -360,16 +384,16 @@ function handleTaskDeleted() {
 }
 
 .group-count {
-  font-size: 13px;
+  font-size: 12px;
   color: #8c8c8c;
   font-weight: 400;
   background: #f0f0f0;
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
 }
 
 .task-items {
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .task-items.completed {
@@ -381,25 +405,58 @@ function handleTaskDeleted() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 40px 16px;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 40px;
+  margin-bottom: 12px;
 }
 
 .empty-state h3 {
-  font-size: 18px;
+  font-size: 16px;
   color: #262626;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .empty-state p {
-  font-size: 14px;
+  font-size: 13px;
   color: #8c8c8c;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 8px 10px;
+  }
+
+  .batch-actions {
+    width: 100%;
+    padding: 8px 0 0 0;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    justify-content: flex-start;
+  }
+
+  .btn-small {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .task-group {
+    margin-bottom: 8px;
+  }
+
+  .group-header {
+    padding: 8px 10px;
+  }
+
+  .empty-state {
+    padding: 30px 12px;
+  }
 }
 </style>

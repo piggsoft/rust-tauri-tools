@@ -5,6 +5,19 @@ use serde_json::json;
 
 // ==================== Task CRUD ====================
 
+/// Creates a new task in the database.
+///
+/// # Arguments
+/// * `task` - TaskInput containing task details including title, description, priority, etc.
+///
+/// # Returns
+/// * `Result<ApiResponse<Task>, String>` - The created task with ID or error message
+///
+/// # Errors
+/// Returns an error if:
+/// - Database connection fails
+/// - Task validation fails
+/// - Database insertion fails
 #[tauri::command]
 pub async fn create_task(task: TaskInput) -> Result<ApiResponse<Task>, String> {
     let pool = get_pool().await?;
@@ -112,6 +125,14 @@ pub async fn update_task(id: i64, task: TaskInput) -> Result<ApiResponse<Task>, 
     Ok(ApiResponse::success(result))
 }
 
+/// Deletes a task by its ID.
+/// This will also cascade delete all associated subtasks and task history.
+///
+/// # Arguments
+/// * `id` - The unique identifier of the task to delete
+///
+/// # Returns
+/// * `Result<ApiResponse<()>, String>` - Success or error message
 #[tauri::command]
 pub async fn delete_task(id: i64) -> Result<ApiResponse<()>, String> {
     let pool = get_pool().await?;
@@ -125,6 +146,13 @@ pub async fn delete_task(id: i64) -> Result<ApiResponse<()>, String> {
     Ok(ApiResponse::success(()))
 }
 
+/// Retrieves a single task by its ID.
+///
+/// # Arguments
+/// * `id` - The unique identifier of the task
+///
+/// # Returns
+/// * `Result<ApiResponse<Task>, String>` - The task if found, or error message
 #[tauri::command]
 pub async fn get_task(id: i64) -> Result<ApiResponse<Task>, String> {
     let pool = get_pool().await?;
@@ -139,6 +167,13 @@ pub async fn get_task(id: i64) -> Result<ApiResponse<Task>, String> {
     Ok(ApiResponse::success(task))
 }
 
+/// Retrieves a list of tasks based on optional filter criteria.
+///
+/// # Arguments
+/// * `filter` - Optional TaskFilter for searching and filtering tasks
+///
+/// # Returns
+/// * `Result<ApiResponse<Vec<Task>>, String>` - Filtered list of tasks or error message
 #[tauri::command]
 pub async fn list_tasks(filter: Option<TaskFilter>) -> Result<ApiResponse<Vec<Task>>, String> {
     let pool = get_pool().await?;
@@ -148,12 +183,16 @@ pub async fn list_tasks(filter: Option<TaskFilter>) -> Result<ApiResponse<Vec<Ta
 
     if let Some(f) = filter {
         if let Some(search) = f.search {
-            query.push_str(&format!(" AND (title LIKE '%{}%' OR description LIKE '%{}%')", search, search));
+            query.push_str(" AND (title LIKE ? OR description LIKE ?)");
+            let pattern = format!("%{}%", search);
+            params.push(pattern.clone());
+            params.push(pattern);
         }
         if let Some(tags) = f.tags {
             if !tags.is_empty() {
                 for tag in &tags {
-                    query.push_str(&format!(" AND tags LIKE '%{}%'", tag));
+                    query.push_str(" AND tags LIKE ?");
+                    params.push(format!("%{}%", tag));
                 }
             }
         }
@@ -285,10 +324,27 @@ pub async fn delete_subtask(id: i64) -> Result<ApiResponse<()>, String> {
 
 // ==================== Batch Operations ====================
 
+/// Completes multiple tasks in a single database transaction for atomicity.
+///
+/// # Arguments
+/// * `ids` - Vector of task IDs to mark as completed
+///
+/// # Returns
+/// * `Result<ApiResponse<()>, String>` - Success or error message
+///
+/// # Errors
+/// Returns an error if:
+/// - Database transaction fails
+/// - Any task update fails
+/// - Task history recording fails
 #[tauri::command]
 pub async fn batch_complete_tasks(ids: Vec<i64>) -> Result<ApiResponse<()>, String> {
     let pool = get_pool().await?;
     let now = Utc::now().to_rfc3339();
+
+    // Begin transaction for atomic operation
+    let mut tx = pool.begin().await
+        .map_err(|e| format!("Failed to begin transaction: {}", e))?;
 
     for id in &ids {
         sqlx::query(
@@ -301,7 +357,7 @@ pub async fn batch_complete_tasks(ids: Vec<i64>) -> Result<ApiResponse<()>, Stri
         .bind(&now)
         .bind(&now)
         .bind(id)
-        .execute(&pool)
+        .execute(&mut *tx)
         .await
         .map_err(|e| format!("Failed to complete task {}: {}", id, e))?;
 
@@ -309,6 +365,10 @@ pub async fn batch_complete_tasks(ids: Vec<i64>) -> Result<ApiResponse<()>, Stri
             .await
             .map_err(|e| format!("Failed to record task history: {}", e))?;
     }
+
+    // Commit transaction - all operations succeed or all fail
+    tx.commit().await
+        .map_err(|e| format!("Failed to commit transaction: {}", e))?;
 
     Ok(ApiResponse::success(()))
 }
@@ -679,4 +739,195 @@ pub async fn delete_backup(backup_path: String) -> Result<ApiResponse<()>, Strin
         .map_err(|e| format!("Failed to delete backup: {}", e))?;
 
     Ok(ApiResponse::success(()))
+}
+
+// ==================== Password Management ====================
+
+/// Creates a new password entry in the database.
+///
+/// # Arguments
+/// * `password` - PasswordInput containing password details
+///
+/// # Returns
+/// * `Result<ApiResponse<Password>, String>` - The created password entry or error message
+#[tauri::command]
+pub async fn create_password(password: PasswordInput) -> Result<ApiResponse<Password>, String> {
+    let pool = get_pool().await?;
+    let now = Utc::now().to_rfc3339();
+
+    let result = sqlx::query_as::<_, Password>(
+        r#"
+        INSERT INTO passwords (
+            category, subcategory, account, password, login_url, notes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING *
+        "#
+    )
+    .bind(&password.category)
+    .bind(&password.subcategory)
+    .bind(&password.account)
+    .bind(&password.password)
+    .bind(&password.login_url)
+    .bind(&password.notes)
+    .bind(&now)
+    .bind(&now)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| format!("Failed to create password: {}", e))?;
+
+    Ok(ApiResponse::success(result))
+}
+
+#[tauri::command]
+pub async fn get_password(id: i64) -> Result<ApiResponse<Password>, String> {
+    let pool = get_pool().await?;
+
+    let password = sqlx::query_as::<_, Password>(
+        "SELECT * FROM passwords WHERE id = ?"
+    )
+    .bind(id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| format!("Failed to get password: {}", e))?;
+
+    match password {
+        Some(p) => Ok(ApiResponse::success(p)),
+        None => Err("Password not found".to_string()),
+    }
+}
+
+/// Retrieves a list of passwords based on optional filter criteria.
+///
+/// # Arguments
+/// * `filter` - Optional PasswordFilter for searching passwords by account, category, etc.
+///
+/// # Returns
+/// * `Result<ApiResponse<Vec<Password>>, String>` - Filtered list of passwords or error message
+#[tauri::command]
+pub async fn list_passwords(filter: Option<PasswordFilter>) -> Result<ApiResponse<Vec<Password>>, String> {
+    let pool = get_pool().await?;
+
+    let (search, category, subcategory) = match filter {
+        Some(f) => (f.search, f.category, f.subcategory),
+        None => (None, None, None),
+    };
+
+    let mut query = String::from("SELECT * FROM passwords WHERE 1=1");
+    let mut params: Vec<String> = Vec::new();
+
+    if let Some(s) = search {
+        query.push_str(&format!(" AND (account LIKE ? OR category LIKE ? OR subcategory LIKE ? OR notes LIKE ?)"));
+        let pattern = format!("%{}%", s);
+        params.push(pattern.clone());
+        params.push(pattern.clone());
+        params.push(pattern.clone());
+        params.push(pattern);
+    }
+
+    if let Some(c) = category {
+        query.push_str(&format!(" AND category = ?"));
+        params.push(c);
+    }
+
+    if let Some(sc) = subcategory {
+        query.push_str(&format!(" AND subcategory = ?"));
+        params.push(sc);
+    }
+
+    query.push_str(" ORDER BY category, subcategory, id DESC");
+
+    let mut sql_query = sqlx::query_as::<_, Password>(&query);
+
+    for param in params {
+        sql_query = sql_query.bind(param);
+    }
+
+    let passwords = sql_query
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| format!("Failed to list passwords: {}", e))?;
+
+    Ok(ApiResponse::success(passwords))
+}
+
+#[tauri::command]
+pub async fn update_password(id: i64, password: PasswordInput) -> Result<ApiResponse<Password>, String> {
+    let pool = get_pool().await?;
+    let now = Utc::now().to_rfc3339();
+
+    let result = sqlx::query_as::<_, Password>(
+        r#"
+        UPDATE passwords
+        SET category = ?, subcategory = ?, account = ?, password = ?,
+            login_url = ?, notes = ?, updated_at = ?
+        WHERE id = ?
+        RETURNING *
+        "#
+    )
+    .bind(&password.category)
+    .bind(&password.subcategory)
+    .bind(&password.account)
+    .bind(&password.password)
+    .bind(&password.login_url)
+    .bind(&password.notes)
+    .bind(&now)
+    .bind(id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| format!("Failed to update password: {}", e))?;
+
+    match result {
+        Some(p) => Ok(ApiResponse::success(p)),
+        None => Err("Password not found".to_string()),
+    }
+}
+
+#[tauri::command]
+pub async fn delete_password(id: i64) -> Result<ApiResponse<()>, String> {
+    let pool = get_pool().await?;
+
+    sqlx::query("DELETE FROM passwords WHERE id = ?")
+        .bind(id)
+        .execute(&pool)
+        .await
+        .map_err(|e| format!("Failed to delete password: {}", e))?;
+
+    Ok(ApiResponse::success(()))
+}
+
+#[tauri::command]
+pub async fn get_password_categories() -> Result<ApiResponse<Vec<String>>, String> {
+    let pool = get_pool().await?;
+
+    let categories = sqlx::query_as::<_, (String,)>(
+        "SELECT DISTINCT category FROM passwords ORDER BY category"
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| format!("Failed to get categories: {}", e))?;
+
+    Ok(ApiResponse::success(categories.into_iter().map(|c| c.0).collect()))
+}
+
+#[tauri::command]
+pub async fn get_password_subcategories(category: Option<String>) -> Result<ApiResponse<Vec<String>>, String> {
+    let pool = get_pool().await?;
+
+    let subcategories = if let Some(cat) = category {
+        sqlx::query_as::<_, (String,)>(
+            "SELECT DISTINCT subcategory FROM passwords WHERE category = ? AND subcategory IS NOT NULL ORDER BY subcategory"
+        )
+        .bind(&cat)
+        .fetch_all(&pool)
+        .await
+    } else {
+        sqlx::query_as::<_, (String,)>(
+            "SELECT DISTINCT subcategory FROM passwords WHERE subcategory IS NOT NULL ORDER BY subcategory"
+        )
+        .fetch_all(&pool)
+        .await
+    }
+    .map_err(|e| format!("Failed to get subcategories: {}", e))?;
+
+    Ok(ApiResponse::success(subcategories.into_iter().map(|sc| sc.0).collect()))
 }

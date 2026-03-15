@@ -1,3 +1,28 @@
+<!--
+  TaskForm Component
+  
+  A modal form for creating and editing tasks with comprehensive input fields.
+  
+  Props:
+  - task: Optional existing Task for editing mode (null for new task)
+  
+  Emits:
+  - close: Form closed without saving
+  - saved: Task successfully saved/created
+  - deleted: Task successfully deleted (edit mode only)
+  
+  Features:
+  - Task title and description inputs
+  - Priority and urgency selectors
+  - Four-quadrant quick set buttons
+  - Date fields for start date, due date, reminder time
+  - Tag management system
+  - Repeat pattern settings
+  - Subtask management (edit mode only)
+  
+  Usage:
+  <TaskForm :task="existingTask" @saved="handleSave" @close="handleClose" />
+-->
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useTaskStore } from '../stores/task'
@@ -611,5 +636,157 @@ const quadrants = [
   background: white;
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 12px;
+  }
 
+  .modal-content {
+    max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 12px 16px;
+  }
+
+  .modal-header h2 {
+    font-size: 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-label {
+    font-size: 13px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .form-select {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .quadrant-selector {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .quadrant-btn {
+    padding: 10px 12px;
+  }
+
+  .quadrant-icon {
+    font-size: 20px;
+  }
+
+  .quadrant-name {
+    font-size: 13px;
+  }
+
+  .quadrant-desc {
+    font-size: 11px;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 3px 6px 3px 10px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+
+  .btn-secondary,
+  .btn-primary,
+  .btn-danger {
+    padding: 7px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .modal-header {
+    padding: 10px 12px;
+  }
+
+  .modal-header h2 {
+    font-size: 15px;
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-label {
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .form-input,
+  .form-textarea,
+  .form-select {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .form-textarea {
+    min-height: 80px;
+  }
+
+  .tag-input-group {
+    flex-direction: column;
+  }
+
+  .btn-add-tag {
+    width: 100%;
+  }
+
+  .tag {
+    font-size: 10px;
+  }
+
+  .modal-footer {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-secondary,
+  .btn-primary,
+  .btn-danger {
+    flex: 1;
+    min-width: 80px;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .subtasks-toggle {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .subtasks-content {
+    padding: 12px 14px;
+  }
+}
 </style>

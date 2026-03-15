@@ -52,17 +52,17 @@ personal-tools/
 - [x] 任务筛选（状态、优先级、紧急度、标签、日期范围）
 - [x] 批量操作（完成、删除、归档）
 - [x] 任务表单（完整的任务属性编辑）
-
-### 待实现 🚧
-- [ ] 时间视图（日历 + 列表）
-- [ ] 四象限视图（艾森豪威尔矩阵）
-- [ ] 子任务功能
-- [ ] 任务搜索
-- [ ] 重复任务
-- [ ] 任务历史记录
-- [ ] 归档和恢复
-- [ ] 数据导出/导入
-- [ ] 数据备份/恢复
+- [x] 时间视图（日历视图）
+- [x] 四象限视图（艾森豪威尔矩阵）
+- [x] 子任务功能
+- [x] 任务搜索
+- [x] 任务历史记录
+- [x] 归档和恢复
+- [x] 数据备份/恢复
+- [x] 密码本管理（安全存储账号密码）
+- [x] 密码本分类和搜索
+- [x] 统一导航侧边栏
+- [x] 首页功能选择界面
 
 ## 安装和运行
 
@@ -104,6 +104,43 @@ cd src-tauri && npx tauri build
 ```
 
 构建产物将位于 `src-tauri/target/release/bundle/` 目录。
+
+## 发布到 GitHub
+
+### 自动构建和发布
+
+项目已配置 GitHub Actions，支持跨平台自动构建和发布。
+
+#### 构建平台
+- **Linux**: x86_64 (AppImage, DEB)
+- **macOS**: Intel & Apple Silicon (DMG, APP)
+- **Windows**: x64 (NSIS, MSI)
+
+#### 发布步骤
+
+1. **本地测试构建**
+   ```bash
+   npm run tauri:build
+   ```
+
+2. **推送代码到 GitHub**
+   ```bash
+   git add .
+   git commit -m "chore: prepare for release v1.0.0"
+   git push origin main
+   ```
+
+3. **创建并推送标签**
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+4. **访问 GitHub 查看构建状态**
+   - Actions 标签：查看构建进度
+   - Releases 标签：下载安装包
+
+详细文档请参考 [BUILD_AND_RELEASE.md](./BUILD_AND_RELEASE.md) 和 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。
 
 ## 数据库
 
@@ -152,6 +189,17 @@ cd src-tauri && npx tauri build
 - name: 标签名称
 - created_at: 创建时间
 
+#### passwords（密码表）
+- id: 密码 ID
+- account: 账号/用户名
+- website: 网站 URL
+- category: 分类
+- subcategory: 子分类
+- password: 密码（加密存储）
+- notes: 备注
+- created_at: 创建时间
+- updated_at: 更新时间
+
 ## 开发指南
 
 ### 添加新的 Tauri Command
@@ -175,20 +223,26 @@ cd src-tauri && npx tauri build
   - [x] 创建数据库表结构
 - [x] 阶段二：核心功能
   - [x] 任务 CRUD
-  - [x] 时间视图（列表）
+  - [x] 时间视图（列表 + 日历）
   - [x] 状态管理
-- [ ] 阶段三：高级功能
-  - [ ] 四象限视图
-  - [ ] 子任务管理
-  - [ ] 搜索和筛选
-- [ ] 阶段四：完善功能
-  - [ ] 重复任务
-  - [ ] 历史记录
-  - [ ] 批量操作
-  - [ ] 归档和恢复
-- [ ] 阶段五：数据功能
-  - [ ] 数据导出/导入
-  - [ ] 备份/恢复
+- [x] 阶段三：高级功能
+  - [x] 四象限视图
+  - [x] 子任务管理
+  - [x] 搜索和筛选
+- [x] 阶段四：完善功能
+  - [x] 重复任务
+  - [x] 历史记录
+  - [x] 批量操作
+  - [x] 归档和恢复
+  - [x] 备份/恢复
+- [x] 阶段五：密码管理
+  - [x] 密码本 CRUD
+  - [x] 密码分类和搜索
+  - [x] 密码复制功能
+- [x] 阶段六：UI/UX 优化
+  - [x] 统一导航侧边栏
+  - [x] 首页功能选择界面
+  - [x] 响应式设计
 
 ## 许可证
 

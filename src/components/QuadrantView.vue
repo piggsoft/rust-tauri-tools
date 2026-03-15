@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useTaskStore } from '../stores/task'
 import TaskItem from './TaskItem.vue'
+import type { Task } from '../types'
 
 const taskStore = useTaskStore()
 
 const quadrants = ref({
-  first: [] as any[],
-  second: [] as any[],
-  third: [] as any[],
-  fourth: [] as any[],
+  first: [] as Task[],
+  second: [] as Task[],
+  third: [] as Task[],
+  fourth: [] as Task[],
 })
 
 const quadrantDefinitions = {
@@ -47,8 +48,9 @@ const quadrantDefinitions = {
   },
 }
 
-function isInQuadrant(task: any, quadrant: string): boolean {
-  const pendingTasks = taskStore.tasks.filter(t => t.status === 'pending')
+function isInQuadrant(task: Task, quadrant: string): boolean {
+  // Ensure task is a valid pending task
+  if (task.status !== 'pending') return false
 
   switch (quadrant) {
     case 'first':
@@ -69,10 +71,10 @@ function updateQuadrants() {
   const pendingTasks = taskStore.tasks.filter(t => t.status === 'pending')
 
   quadrants.value = {
-    first: pendingTasks.filter((t: any) => isInQuadrant(t, 'first')),
-    second: pendingTasks.filter((t: any) => isInQuadrant(t, 'second')),
-    third: pendingTasks.filter((t: any) => isInQuadrant(t, 'third')),
-    fourth: pendingTasks.filter((t: any) => isInQuadrant(t, 'fourth')),
+    first: pendingTasks.filter((t: Task) => isInQuadrant(t, 'first')),
+    second: pendingTasks.filter((t: Task) => isInQuadrant(t, 'second')),
+    third: pendingTasks.filter((t: Task) => isInQuadrant(t, 'third')),
+    fourth: pendingTasks.filter((t: Task) => isInQuadrant(t, 'fourth')),
   }
 }
 
@@ -128,6 +130,11 @@ function moveTaskToQuadrant(task: any, targetQuadrant: 'first' | 'second' | 'thi
     repeat_until: task.repeat_until,
   }  )
 }
+
+// Initialize quadrants when component mounts
+onMounted(() => {
+  updateQuadrants()
+})
 
 // Watch for task changes
 watch(() => taskStore.tasks, () => {
@@ -372,7 +379,9 @@ watch(() => taskStore.tasks, () => {
   grid-template-rows: repeat(2, 1fr);
   gap: 16px;
   padding: 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* Important for nested flex/grid overflow */
 }
 
 .quadrant {
@@ -382,34 +391,36 @@ watch(() => taskStore.tasks, () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 300px; /* Increased minimum height for better visibility */
 }
 
 .quadrant-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0; /* Don't shrink header */
 }
 
 .quadrant-info h3 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #262626;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
 }
 
 .quadrant-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: #8c8c8c;
   margin: 0;
 }
 
 .quadrant-badge {
-  padding: 6px 16px;
-  border-radius: 20px;
+  padding: 4px 12px;
+  border-radius: 16px;
   color: white;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -417,7 +428,9 @@ watch(() => taskStore.tasks, () => {
 .quadrant-content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  overflow-x: hidden;
+  padding: 10px;
+  min-height: 0; /* Important for nested overflow */
 }
 
 .quadrant-content::-webkit-scrollbar {
@@ -430,6 +443,19 @@ watch(() => taskStore.tasks, () => {
 }
 
 .quadrant-content::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+.quadrant-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.quadrant-grid::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 4px;
+}
+
+.quadrant-grid::-webkit-scrollbar-thumb:hover {
   background: #bfbfbf;
 }
 
@@ -512,6 +538,202 @@ watch(() => taskStore.tasks, () => {
 
   .legend-items {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .quadrant-header {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .header-left h2 {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .header-right {
+    width: 100%;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .quadrant-grid {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .quadrant {
+    min-height: 250px;
+  }
+
+  .quadrant-header {
+    padding: 12px 16px;
+  }
+
+  .quadrant-info h3 {
+    font-size: 16px;
+  }
+
+  .quadrant-subtitle {
+    font-size: 12px;
+  }
+
+  .quadrant-badge {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+
+  .quadrant-content {
+    padding: 8px;
+  }
+
+  .quadrant-empty {
+    padding: 24px 16px;
+  }
+
+  .empty-icon {
+    font-size: 36px;
+  }
+
+  .quadrant-empty p {
+    font-size: 13px;
+  }
+
+  .task-list {
+    gap: 6px;
+  }
+
+  .quadrant-legend {
+    padding: 12px 16px;
+  }
+
+  .quadrant-legend h4 {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .legend-items {
+    gap: 8px;
+  }
+
+  .legend-item {
+    gap: 8px;
+  }
+
+  .legend-color {
+    width: 10px;
+    height: 10px;
+  }
+
+  .legend-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quadrant-view {
+    overflow-y: auto;
+  }
+
+  .quadrant-header {
+    padding: 12px;
+  }
+
+  .header-left h2 {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .quadrant-grid {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .quadrant {
+    min-height: 200px;
+  }
+
+  .quadrant-header {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .quadrant-info h3 {
+    font-size: 15px;
+    margin: 0 0 2px 0;
+  }
+
+  .quadrant-subtitle {
+    font-size: 11px;
+  }
+
+  .quadrant-badge {
+    padding: 3px 10px;
+    font-size: 11px;
+    align-self: flex-start;
+  }
+
+  .quadrant-content {
+    padding: 6px;
+  }
+
+  .quadrant-empty {
+    padding: 20px 12px;
+  }
+
+  .empty-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .quadrant-empty p {
+    font-size: 12px;
+  }
+
+  .task-list {
+    gap: 4px;
+  }
+
+  .quadrant-legend {
+    padding: 10px 12px;
+  }
+
+  .quadrant-legend h4 {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .legend-items {
+    gap: 6px;
+  }
+
+  .legend-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .legend-color {
+    margin-top: 0;
+  }
+
+  .legend-text {
+    font-size: 11px;
+    line-height: 1.4;
   }
 }
 </style>

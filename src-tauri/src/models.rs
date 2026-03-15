@@ -85,6 +85,37 @@ pub enum ExportFormat {
     Json,
 }
 
+// Password models
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Password {
+    pub id: i64,
+    pub category: String,
+    pub subcategory: Option<String>,
+    pub account: String,
+    pub password: String,
+    pub login_url: Option<String>,
+    pub notes: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PasswordInput {
+    pub category: String,
+    pub subcategory: Option<String>,
+    pub account: String,
+    pub password: String,
+    pub login_url: Option<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PasswordFilter {
+    pub search: Option<String>,
+    pub category: Option<String>,
+    pub subcategory: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<T> {
     pub success: bool,

@@ -10,8 +10,20 @@
     "frontendDist": "../dist"
   },
   "bundle": {
-    "active": false,
-    "icon": []
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "targets": "all",
+    "publisher": "personal-tools",
+    "copyright": "",
+    "category": "Productivity",
+    "shortDescription": "个人工具集 - 任务和密码管理",
+    "longDescription": "一个集成了待办事项管理和密码本的个人工具集应用，帮助您高效管理日常任务和安全存储密码信息。"
   },
   "app": {
     "windows": [

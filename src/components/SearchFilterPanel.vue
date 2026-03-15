@@ -596,4 +596,105 @@ function getActiveFilterCount() {
   background: #f0f0f0;
   border-color: #bfbfbf;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-filter-panel {
+    border-radius: 6px;
+  }
+
+  .search-bar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .search-input {
+    font-size: 13px;
+  }
+
+  .filter-toggle {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .filter-panel {
+    padding: 12px;
+  }
+
+  .filter-section {
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .quick-filters {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .quick-filter-btn {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .checkbox-label {
+    font-size: 13px;
+  }
+
+  .tags-group {
+    gap: 4px;
+  }
+
+  .tag-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .date-inputs {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .date-input {
+    padding: 5px 8px;
+    font-size: 13px;
+  }
+
+  .btn-reset {
+    font-size: 13px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    padding: 8px 10px;
+  }
+
+  .search-input {
+    font-size: 12px;
+  }
+
+  .filter-toggle {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .filter-panel {
+    padding: 10px;
+  }
+
+  .quick-filter-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .date-input {
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+}
 </style>

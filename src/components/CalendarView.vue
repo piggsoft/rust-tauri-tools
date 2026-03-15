@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useTaskStore } from '../stores/task'
 import TaskList from './TaskList.vue'
 import type { Task } from '../types'
+import { formatDateToYYYYMMDD, getToday } from '../utils/dateUtils'
 
 const taskStore = useTaskStore()
 
@@ -65,15 +66,11 @@ const tasksByDate = computed(() => {
   return map
 })
 
-const today = computed(() => {
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  return now
-})
+const today = computed(() => getToday())
 
 const selectedDateTasks = computed(() => {
   if (!selectedDate.value) return []
-  const dateKey = formatDate(selectedDate.value)
+  const dateKey = formatDateToYYYYMMDD(selectedDate.value)
   return tasksByDate.value.get(dateKey) || []
 })
 
@@ -83,20 +80,16 @@ const monthYearText = computed(() => {
   return `${year}年${month}月`
 })
 
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
-
 function isToday(date: Date): boolean {
-  return formatDate(date) === formatDate(today.value)
+  return formatDateToYYYYMMDD(date) === formatDateToYYYYMMDD(today.value)
 }
 
 function isSelected(date: Date): boolean {
-  return selectedDate.value && formatDate(date) === formatDate(selectedDate.value)
+  return selectedDate.value && formatDateToYYYYMMDD(date) === formatDateToYYYYMMDD(selectedDate.value)
 }
 
 function getTasksForDate(date: Date): Task[] {
-  const dateKey = formatDate(date)
+  const dateKey = formatDateToYYYYMMDD(date)
   return tasksByDate.value.get(dateKey) || []
 }
 
@@ -713,5 +706,216 @@ function nextWeek() {
 .slide-leave-to {
   transform: translateX(100%);
   opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .calendar-section {
+    padding: 12px;
+  }
+
+  .calendar-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .calendar-nav {
+    padding: 12px;
+  }
+
+  .month-year {
+    font-size: 16px;
+  }
+
+  .week-days {
+    padding: 8px 12px;
+    gap: 2px;
+  }
+
+  .week-day {
+    font-size: 11px;
+    width: calc(100% / 7);
+  }
+
+  .calendar-grid {
+    padding: 8px 12px;
+    gap: 4px;
+  }
+
+  .day-cell {
+    min-height: 50px;
+    padding: 4px;
+  }
+
+  .day-number {
+    font-size: 12px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .task-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .more-tasks {
+    font-size: 9px;
+  }
+
+  .legend {
+    gap: 16px;
+    padding: 10px;
+  }
+
+  .legend-item {
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .list-section {
+    width: 100%;
+  }
+
+  .list-header {
+    padding: 12px 16px;
+  }
+
+  .btn-back {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+
+  .selected-date-title {
+    font-size: 14px;
+  }
+
+  .task-count {
+    font-size: 12px;
+  }
+
+  .list-content {
+    padding: 12px;
+  }
+
+  .task-item-mini {
+    padding: 10px 12px;
+  }
+
+  .task-title {
+    font-size: 13px;
+  }
+
+  .task-desc {
+    font-size: 12px;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  .empty-icon {
+    font-size: 40px;
+  }
+
+  .empty-state h3 {
+    font-size: 16px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-section {
+    padding: 8px;
+  }
+
+  .calendar-header {
+    padding: 8px 10px;
+    flex-wrap: wrap;
+  }
+
+  .month-year {
+    font-size: 14px;
+  }
+
+  .week-days {
+    padding: 6px 8px;
+  }
+
+  .week-day {
+    font-size: 10px;
+  }
+
+  .calendar-grid {
+    padding: 6px 8px;
+    gap: 2px;
+  }
+
+  .day-cell {
+    min-height: 40px;
+    padding: 2px;
+  }
+
+  .day-number {
+    font-size: 11px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .task-dots {
+    gap: 2px;
+  }
+
+  .task-dot {
+    width: 4px;
+    height: 4px;
+  }
+
+  .legend {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .list-header {
+    padding: 10px 12px;
+  }
+
+  .selected-date-title {
+    font-size: 13px;
+  }
+
+  .list-content {
+    padding: 10px;
+  }
+
+  .task-item-mini {
+    padding: 8px 10px;
+  }
+
+  .task-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .task-title {
+    font-size: 12px;
+  }
+
+  .task-desc {
+    font-size: 11px;
+  }
+
+  .priority,
+  .urgency {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
 }
 </style>

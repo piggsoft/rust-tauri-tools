@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { taskApi } from '../api/tasks'
+import { withRetry } from '../utils/retryUtils'
 import type { Task, TaskInput, TaskFilter, ViewType } from '../types'
 
 export const useTaskStore = defineStore('task', () => {
@@ -49,9 +50,14 @@ export const useTaskStore = defineStore('task', () => {
     loading.value = true
     error.value = null
     try {
-      tasks.value = await taskApi.listTasks(filters.value)
+      tasks.value = await withRetry(
+        () => taskApi.listTasks(filters.value),
+        { maxRetries: 2, initialDelay: 500 }
+      )
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch tasks'
+      error.value = e instanceof Error 
+        ? `Failed to fetch tasks: ${e.message}` 
+        : 'Failed to fetch tasks due to unknown error'
     } finally {
       loading.value = false
     }
@@ -115,7 +121,7 @@ export const useTaskStore = defineStore('task', () => {
     const task = tasks.value.find(t => t.id === id)
     if (!task) return
 
-    const newStatus = task.status === 'pending' ? 'completed' : 'pending'
+    const newStatus: 'pending' | 'completed' = task.status === 'pending' ? 'completed' : 'pending'
     await updateTask(id, {
       title: task.title,
       description: task.description,

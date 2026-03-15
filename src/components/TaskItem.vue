@@ -1,6 +1,24 @@
+<!--
+  TaskItem Component
+  
+  A single task display component that shows task information with completion controls.
+  
+  Props:
+  - task: Task object containing task details
+  
+  Features:
+  - Shows task title, description, priority, and due date
+  - Visual indicators for overdue and completed tasks
+  - Checkbox for task completion
+  - Edit and delete functionality
+  
+  Usage:
+  <TaskItem :task="task" @edit="handleEdit" @delete="handleDelete" />
+-->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTaskStore } from '../stores/task'
+import { isOverdue, formatDate, formatTime } from '../utils/dateUtils'
 import type { Task } from '../types'
 
 const props = defineProps<{
@@ -39,33 +57,19 @@ const urgencyColors = {
   low: '#52c41a',
 }
 
-const isOverdue = computed(() => {
+const taskIsOverdue = computed(() => {
   if (!props.task.due_date || props.task.status === 'completed') return false
-  return new Date(props.task.due_date) < new Date()
+  return isOverdue(props.task.due_date)
 })
 
 const dueDateText = computed(() => {
   if (!props.task.due_date) return null
-  const date = new Date(props.task.due_date)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const taskDate = new Date(date)
-  taskDate.setHours(0, 0, 0, 0)
-
-  if (taskDate.getTime() === today.getTime()) {
-    return '今天'
-  } else if (taskDate.getTime() === today.getTime() + 24 * 60 * 60 * 1000) {
-    return '明天'
-  } else {
-    return `${date.getMonth() + 1}/${date.getDate()}`
-  }
+  return formatDate(props.task.due_date)
 })
 
 const dueTimeText = computed(() => {
   if (!props.task.due_date) return null
-  const date = new Date(props.task.due_date)
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  return formatTime(props.task.due_date)
 })
 
 function handleCheckboxChange(e: Event) {
@@ -93,20 +97,34 @@ function handleToggleComplete() {
     @click="handleEdit"
   >
     <div class="task-left">
-      <div class="task-checkbox" @click.stop>
-        <input
-          type="checkbox"
-          :checked="task.status === 'completed'"
-          @change="handleToggleComplete"
-        />
+      <!-- Complete Checkbox with Icon -->
+      <div class="task-checkbox" @click.stop title="✓ 点击标记任务完成">
+        <div class="checkbox-wrapper complete-checkbox">
+          <input
+            type="checkbox"
+            :checked="task.status === 'completed'"
+            @change="handleToggleComplete"
+          />
+          <svg v-if="task.status === 'completed'" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
       </div>
-      <div class="task-select" @click.stop>
-        <input
-          type="checkbox"
-          :checked="isSelected"
-          @change="handleCheckboxChange"
-        />
+      
+      <!-- Select Checkbox with Icon -->
+      <div class="task-select" @click.stop title="□ 点击批量选择此任务">
+        <div class="checkbox-wrapper select-checkbox" :class="{ 'is-selected': isSelected }">
+          <input
+            type="checkbox"
+            :checked="isSelected"
+            @change="handleCheckboxChange"
+          />
+          <svg v-if="isSelected" class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
       </div>
+      
       <div class="task-content">
         <h4 class="task-title">{{ task.title }}</h4>
         <p v-if="task.description" class="task-description">{{ task.description }}</p>
@@ -170,11 +188,11 @@ function handleToggleComplete() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: white;
   border: 1px solid transparent;
   border-radius: 6px;
-  margin: 4px 8px;
+  margin: 4px 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -201,16 +219,105 @@ function handleToggleComplete() {
 .task-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
 
-.task-checkbox input,
-.task-select input {
-  width: 18px;
-  height: 18px;
+/* Checkbox Wrapper */
+.checkbox-wrapper {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.checkbox-wrapper input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.check-icon {
+  position: absolute;
+  pointer-events: none;
+  transition: all 0.2s;
+}
+
+/* Complete Checkbox - Green Circle */
+.complete-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #b7eb8f;
+  border-radius: 50%;
+  background: white;
+  transition: all 0.2s;
+}
+
+.complete-checkbox:hover {
+  border-color: #52c41a;
+  background: #f6ffed;
+}
+
+.complete-checkbox.is-checked {
+  background: #52c41a;
+  border-color: #52c41a;
+}
+
+.task-checkbox .check-icon {
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s;
+}
+
+.task-checkbox:has(input:checked) .check-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.task-checkbox:has(input:checked) .complete-checkbox {
+  background: #52c41a;
+  border-color: #52c41a;
+}
+
+/* Select Checkbox - Blue Square */
+.select-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d9d9d9;
+  border-radius: 4px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.select-checkbox:hover {
+  border-color: #40a9ff;
+  background: #e6f7ff;
+}
+
+.task-select .check-icon {
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s;
+}
+
+.task-select:has(input:checked) .check-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.task-select:has(input:checked) .select-checkbox {
+  background: #1890ff;
+  border-color: #1890ff;
 }
 
 .task-content {
@@ -219,10 +326,10 @@ function handleToggleComplete() {
 }
 
 .task-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #262626;
-  margin: 0 0 4px 0;
+  margin: 0 0 3px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -234,9 +341,9 @@ function handleToggleComplete() {
 }
 
 .task-description {
-  font-size: 13px;
+  font-size: 12px;
   color: #8c8c8c;
-  margin: 0 0 6px 0;
+  margin: 0 0 5px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -244,13 +351,13 @@ function handleToggleComplete() {
 
 .task-tags {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .tag {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 10px;
+  padding: 1px 6px;
   background: #f0f0f0;
   color: #595959;
   border-radius: 3px;
@@ -259,12 +366,13 @@ function handleToggleComplete() {
 .task-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .task-meta {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .meta-item {
@@ -275,14 +383,15 @@ function handleToggleComplete() {
 }
 
 .meta-label {
-  font-size: 11px;
+  font-size: 10px;
   color: #8c8c8c;
 }
 
 .meta-value {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: #262626;
+  white-space: nowrap;
 }
 
 .meta-value.priority,
@@ -301,12 +410,12 @@ function handleToggleComplete() {
 
 .task-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .btn-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,5 +435,97 @@ function handleToggleComplete() {
 .btn-icon.btn-delete:hover {
   background: #fff1f0;
   color: #ff4d4f;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .task-item {
+    padding: 8px 10px;
+    margin: 3px 4px;
+  }
+
+  .checkbox-wrapper {
+    width: 18px;
+    height: 18px;
+  }
+
+  .complete-checkbox,
+  .select-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .task-title {
+    font-size: 12px;
+  }
+
+  .task-description {
+    font-size: 11px;
+  }
+
+  .task-right {
+    gap: 8px;
+  }
+
+  .task-meta {
+    gap: 6px;
+  }
+
+  .meta-item {
+    align-items: flex-start;
+  }
+
+  .meta-label {
+    font-size: 9px;
+  }
+
+  .meta-value {
+    font-size: 10px;
+  }
+
+  .btn-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-item {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px;
+  }
+
+  .task-left {
+    width: 100%;
+  }
+
+  .checkbox-wrapper {
+    width: 16px;
+    height: 16px;
+  }
+
+  .complete-checkbox,
+  .select-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+
+  .task-right {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .task-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .task-actions {
+    margin-left: auto;
+  }
 }
 </style>

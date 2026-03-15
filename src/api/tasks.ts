@@ -4,7 +4,12 @@ import type { Task, TaskInput, TaskFilter, ApiResponse, Subtask } from '../types
 export const taskApi = {
   // Task CRUD
   async createTask(task: TaskInput): Promise<Task> {
-    const response: ApiResponse<Task> = await invoke('create_task', { task })
+    // Ensure tags is properly handled - only include if non-empty
+    const taskData = {
+      ...task,
+      tags: task.tags && task.tags.length > 0 ? task.tags : undefined
+    }
+    const response: ApiResponse<Task> = await invoke('create_task', { task: taskData })
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to create task')
     }
@@ -12,7 +17,12 @@ export const taskApi = {
   },
 
   async updateTask(id: number, task: TaskInput): Promise<Task> {
-    const response: ApiResponse<Task> = await invoke('update_task', { id, task })
+    // Ensure tags is properly handled - only include if non-empty
+    const taskData = {
+      ...task,
+      tags: task.tags && task.tags.length > 0 ? task.tags : undefined
+    }
+    const response: ApiResponse<Task> = await invoke('update_task', { id, task: taskData })
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to update task')
     }

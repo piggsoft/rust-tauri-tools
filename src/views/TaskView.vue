@@ -96,35 +96,42 @@ onMounted(() => {
   background: white;
   border-bottom: 1px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .header-left h1 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
+  white-space: nowrap;
 }
 
 .view-switcher {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .view-switcher button {
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: 1px solid #e0e0e0;
   background: white;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .view-switcher button:hover {
@@ -140,19 +147,20 @@ onMounted(() => {
 
 .header-right {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .btn-secondary {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: white;
   border: 1px solid #d9d9d9;
-  border-radius: 6px;
+  border-radius: 4px;
   color: #595959;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -163,15 +171,16 @@ onMounted(() => {
 }
 
 .btn-primary {
-  padding: 8px 20px;
+  padding: 6px 16px;
   background: #1890ff;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .btn-primary:hover {
@@ -183,13 +192,78 @@ onMounted(() => {
 .main-content {
   flex: 1;
   overflow: hidden;
-  padding: 24px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .filter-section {
   flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 16px;
+  }
+
+  .header-left {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .header-left h1 {
+    font-size: 16px;
+  }
+
+  .view-switcher {
+    width: 100%;
+  }
+
+  .view-switcher button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn-secondary,
+  .btn-primary {
+    flex: 1;
+  }
+
+  .main-content {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 8px 12px;
+  }
+
+  .header-left h1 {
+    font-size: 14px;
+  }
+
+  .view-switcher button {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .btn-secondary,
+  .btn-primary {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .main-content {
+    padding: 8px;
+  }
 }
 </style>
