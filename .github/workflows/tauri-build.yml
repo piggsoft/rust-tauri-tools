@@ -68,4 +68,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tauriScript: npm run tauri
-          args: build --target ${{ matrix.target }} ${{ matrix.args }}
+          args: --target ${{ matrix.target }}
