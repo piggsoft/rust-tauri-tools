@@ -69,3 +69,37 @@ jobs:
         with:
           tauriScript: npm run tauri
           args: --target ${{ matrix.target }}
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Release ${{ github.ref_name }}'
+          releaseBody: |
+            ## 更新内容
+
+            查看 [CHANGELOG.md](https://github.com/piggsoft/rust-tauri-tools/blob/main/CHANGELOG.md) 了解详细变更
+
+            ## 下载
+
+            选择适合你操作系统的安装包：
+
+            - **Windows**: 下载 `.exe` 安装程序
+            - **macOS Intel**: 下载 `.dmg` 文件
+            - **macOS Apple Silicon**: 下载 `.dmg` 文件
+            - **Linux**: 下载 `.AppImage` 文件
+
+            ## 安装说明
+
+            ### Windows
+            1. 下载 `.exe` 安装程序
+            2. 运行安装程序
+            3. 按照提示完成安装
+
+            ### macOS
+            1. 下载 `.dmg` 文件
+            2. 打开文件
+            3. 将应用拖拽到 Applications 文件夹
+
+            ### Linux
+            1. 下载 `.AppImage` 文件
+            2. 添加执行权限：`chmod +x 个人工具集-x86_64.AppImage`
+            3. 运行：`./个人工具集-x86_64.AppImage`
+          releaseDraft: true
+          prerelease: false
