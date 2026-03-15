@@ -62,6 +62,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Extract changelog
+        id: changelog
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          node scripts/extract-changelog.js $VERSION > release_notes.md
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -72,11 +81,9 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'Release ${{ github.ref_name }}'
           releaseBody: |
-            ## 更新内容
+            ${{ steps.changelog.outputs.notes }}
 
-            查看 [CHANGELOG.md](https://github.com/piggsoft/rust-tauri-tools/blob/main/CHANGELOG.md) 了解详细变更
-
-            ## 下载
+            ## 下载说明
 
             选择适合你操作系统的安装包：
 
@@ -101,5 +108,7 @@ jobs:
             1. 下载 `.AppImage` 文件
             2. 添加执行权限：`chmod +x 个人工具集-x86_64.AppImage`
             3. 运行：`./个人工具集-x86_64.AppImage`
+
+            完整变更日志：[CHANGELOG.md](https://github.com/piggsoft/rust-tauri-tools/blob/main/CHANGELOG.md)
           releaseDraft: true
           prerelease: false
