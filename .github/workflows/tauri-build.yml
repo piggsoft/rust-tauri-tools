@@ -64,12 +64,15 @@ jobs:
 
       - name: Extract changelog
         id: changelog
+        shell: bash
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           node scripts/extract-changelog.js $VERSION > release_notes.md
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          cat release_notes.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo 'notes<<EOF'
+            cat release_notes.md
+            echo EOF
+          } >> $GITHUB_OUTPUT
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
