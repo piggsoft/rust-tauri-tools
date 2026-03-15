@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useTaskStore } from '../stores/task'
-import TaskList from './TaskList.vue'
 import type { Task } from '../types'
 import { formatDateToYYYYMMDD, getToday } from '../utils/dateUtils'
 
@@ -85,7 +84,7 @@ function isToday(date: Date): boolean {
 }
 
 function isSelected(date: Date): boolean {
-  return selectedDate.value && formatDateToYYYYMMDD(date) === formatDateToYYYYMMDD(selectedDate.value)
+  return !!selectedDate.value && formatDateToYYYYMMDD(date) === formatDateToYYYYMMDD(selectedDate.value)
 }
 
 function getTasksForDate(date: Date): Task[] {
@@ -150,6 +149,7 @@ function prevWeek() {
     currentMonth.value.getMonth() - 1,
     currentMonth.value.getDate() - 7
   )
+  showListView.value = true
 }
 
 function nextWeek() {
@@ -158,6 +158,7 @@ function nextWeek() {
     currentMonth.value.getMonth() + 1,
     currentMonth.value.getDate() + 7
   )
+  showListView.value = true
 }
 </script>
 

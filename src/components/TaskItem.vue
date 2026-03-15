@@ -59,7 +59,8 @@ const urgencyColors = {
 
 const taskIsOverdue = computed(() => {
   if (!props.task.due_date || props.task.status === 'completed') return false
-  return isOverdue(props.task.due_date)
+  const overdue = isOverdue(props.task.due_date)
+  return overdue
 })
 
 const dueDateText = computed(() => {
@@ -74,6 +75,7 @@ const dueTimeText = computed(() => {
 
 function handleCheckboxChange(e: Event) {
   const checked = (e.target as HTMLInputElement).checked
+  console.log('Task selection changed:', props.task.id, checked)
   taskStore.toggleTaskSelection(props.task.id)
 }
 

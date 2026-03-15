@@ -102,6 +102,8 @@ function moveTaskToQuadrant(task: any, targetQuadrant: 'first' | 'second' | 'thi
   let priority = task.priority
   let urgency = task.urgency
 
+  console.log('Moving task to quadrant:', targetQuadrant, quadrant)
+
   if (targetQuadrant === 'first') {
     priority = 'high'
     urgency = 'high'

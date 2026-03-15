@@ -122,6 +122,7 @@ export const useTaskStore = defineStore('task', () => {
     if (!task) return
 
     const newStatus: 'pending' | 'completed' = task.status === 'pending' ? 'completed' : 'pending'
+    console.log('Toggling task status:', id, newStatus)
     await updateTask(id, {
       title: task.title,
       description: task.description,

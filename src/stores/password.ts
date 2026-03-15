@@ -8,7 +8,7 @@ export const usePasswordStore = defineStore('password', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const filter = ref<PasswordFilter>({})
-  const selectedPassword = ref<Password | null>(null)
+  const selectedPassword = ref<Password | undefined>(undefined)
   const showForm = ref(false)
   const searchQuery = ref('')
   const selectedCategory = ref<string>('')
@@ -116,18 +116,18 @@ export const usePasswordStore = defineStore('password', () => {
     }
   }
 
-  function selectPassword(password: Password | null) {
+  function selectPassword(password: Password | undefined) {
     selectedPassword.value = password
     showForm.value = true
   }
 
   function openCreateForm() {
-    selectedPassword.value = null
+    selectedPassword.value = undefined
     showForm.value = true
   }
 
   function closeForm() {
-    selectedPassword.value = null
+    selectedPassword.value = undefined
     showForm.value = false
   }
 

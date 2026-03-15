@@ -22,7 +22,7 @@
   <PasswordForm :password="existingPassword" @submit="handleSubmit" @close="handleClose" />
 -->
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { usePasswordStore } from '../stores/password'
 import type { PasswordInput, Password } from '../api/passwords'
 

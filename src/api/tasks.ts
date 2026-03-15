@@ -129,7 +129,7 @@ export const taskApi = {
 
   // History and archive
   async getTaskHistory(taskId: number): Promise<any[]> {
-    const response = await invoke('get_task_history', { taskId })
+    const response = await invoke('get_task_history', { taskId }) as ApiResponse<any[]>
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Failed to get task history')
     }

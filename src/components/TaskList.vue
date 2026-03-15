@@ -28,6 +28,8 @@ const groupedTasks = computed(() => {
   // Use cached date references
   const { today, tomorrow, weekEnd } = dateReferences.value
 
+  console.log('Date references:', { today, tomorrow, weekEnd })
+
   const overdue: Task[] = []
   const todayTasks: Task[] = []
   const thisWeek: Task[] = []

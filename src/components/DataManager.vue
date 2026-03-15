@@ -85,6 +85,7 @@ async function createBackup() {
   try {
     isLoading.value = true
     const backupPath = await invoke('backup_database')
+    console.log('Backup created at:', backupPath)
     await fetchBackups()
     showMessage('success', '数据库备份已创建')
   } catch (error) {
